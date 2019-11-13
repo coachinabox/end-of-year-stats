@@ -11,6 +11,8 @@ namespace :github do
       comments: 0,
       commits: 0,
       issues: 0,
+      additions: 0,
+      deletions: 0
     }
 
     puts "Generating end-of-year statistics for #{org} in #{year}."
@@ -39,10 +41,24 @@ namespace :github do
       commits = Octokit.commits_between(full_name, start, stop)
       puts "    - Commits: #{commits.size}"
 
+      additions = 0
+      deletions = 0
+
+      prs.each do |pr|
+        pull = Octokit.pull_request(full_name, pr.number)
+        additions += pull.additions
+        deletions += pull.deletions
+      end
+
+      puts "    - Lines Added: #{additions}"
+      puts "    - Lines Deleted: #{deletions}"
+
       data[:prs] += prs.size
       data[:comments] += comments.size
       data[:commits] += commits.size
       data[:issues] += issues.size
+      data[:additions] += additions
+      data[:deletions] += deletions
     end
 
     puts "TOTAL:"
@@ -50,6 +66,8 @@ namespace :github do
     puts "    - Comments: #{data[:comments]}"
     puts "    - Commits: #{data[:commits]}"
     puts "    - Issues: #{data[:issues]}"
+    puts "    - Lines Added: #{data[:additions]}"
+    puts "    - Lines Deleted: #{data[:deletions]}"
   end
 
   task :setup do
@@ -59,4 +77,3 @@ namespace :github do
     end
   end
 end
-
