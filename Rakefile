@@ -70,6 +70,33 @@ namespace :github do
     puts "    - Lines Deleted: #{data[:deletions]}"
   end
 
+  task year_list: [:dotenv, :setup] do
+    year = Integer(ENV.fetch("YEAR"))
+    org = ENV.fetch("ORG")
+    data = {}
+
+    puts "Gathering PRs for #{org} in #{year}."
+
+    Octokit.org_repos(org).each do |repo|
+      full_name = "#{org}/#{repo.name}"
+      start = Date.new(year, 1, 1)
+      stop = Date.new(year, 12, 31)
+      data[full_name] = []
+
+      prs = Octokit.pull_requests(full_name, state: :closed).select do |pr|
+        pr.merged_at && pr.merged_at.year == year
+      end
+      prs.each { |pr|   data[full_name] << pr.title }
+    end
+
+    data.each do |repo, prs|
+      puts "List of PRs for #{repo}"
+      prs.each do |pr|
+        puts "- #{pr}"
+      end
+    end
+  end
+
   task :setup do
     Octokit.configure do |config|
       config.access_token = ENV.fetch("GITHUB_TOKEN")
